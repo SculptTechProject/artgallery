@@ -3,6 +3,24 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@layer components {
+    .glass {
+        @apply rounded-xl
+        bg-white/10 backdrop-blur-md border border-white/20 shadow-lg ring-1 ring-white/10
+        dark:bg-neutral-800/30 dark:border-white/10 dark:ring-white/5;
+    }
+    
+    .glass-hover {
+        @apply transition hover:bg-white/15 dark:hover:bg-neutral-800/40;
+    }
+    
+    .glass-fallback {
+        @apply bg-white/70 dark:bg-neutral-800/70;
+    }
+    /* użycie: class="glass supports-[backdrop-filter]:glass glass-fallback" */
+}
+
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
