@@ -23,3 +23,18 @@ export const api = {
     put: <T>(path: string, body: any, init?: RequestInit) => request<T>("PUT", path, body, init),
     delete: <T>(path: string, init?: RequestInit) => request<T>("DELETE", path, undefined, init),
 };
+
+export async function uploadFile(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/uploads`, {
+        method: "POST",
+        body: formData,
+        // Nie ustawiamy Content-Type, fetch zrobi to sam dla FormData (z boundary)
+    });
+
+    if (!res.ok) throw new Error(`Upload failed: ${res.status} ${await res.text()}`);
+    const data = await res.json();
+    return data.url; // Zakładamy, że backend zwraca { "url": "..." }
+}

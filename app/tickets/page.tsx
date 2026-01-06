@@ -2,23 +2,44 @@
 
 import { useState } from "react";
 import { useExhibitions } from "@/hooks/useExhibitions";
-import { Loader2, Calendar, MapPin, Ticket, X, CheckCircle2 } from "lucide-react";
+import { Loader2, Calendar, MapPin, Ticket, X, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 export default function TicketsPage() {
-    const { exhibitions, loading, error } = useExhibitions();
+    const { exhibitions, loading } = useExhibitions();
     const [selectedExhibition, setSelectedExhibition] = useState<any>(null);
-    const [ticketType, setTicketType] = useState<"normal" | "reduced">("normal");
-    const [isPurchased, setIsPurchased] = useState(false);
+    const [email, setEmail] = useState("");
+    const [ticketType, setTicketType] = useState("Normalny");
+    const [paymentMethod, setPaymentMethod] = useState("BLIK");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [purchasedEmail, setPurchasedEmail] = useState("");
 
-    const handleBuyTicket = () => {
-        // Symulacja zakupu
-        setIsPurchased(true);
-        setTimeout(() => {
-            setIsPurchased(false);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedExhibition) return;
+
+        setIsSubmitting(true);
+        try {
+            await api.post("/api/v1/tickets/buy", {
+                exhibitionId: parseInt(selectedExhibition.id, 10),
+                email: email,
+                type: ticketType === "Normalny" ? 0 : 1,
+                paymentMethod: paymentMethod === "Karta" ? "Card" : paymentMethod
+            });
+            
+            setPurchasedEmail(email);
             setSelectedExhibition(null);
-        }, 3000);
+            setEmail("");
+            setTicketType("Normalny");
+            setPaymentMethod("BLIK");
+            setShowSuccess(true);
+        } catch (err) {
+            alert("Błąd zakupu biletu");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (loading && exhibitions.length === 0) {
@@ -101,96 +122,133 @@ export default function TicketsPage() {
                 </div>
             </div>
 
-            {/* Ticket Modal */}
             <AnimatePresence>
                 {selectedExhibition && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
                         <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={() => !isPurchased && setSelectedExhibition(null)}
-                            className="absolute inset-0 bg-black/80 backdrop-blur-md"
-                        />
-                        <motion.div
                             initial={{ opacity: 0, scale: 0.9, y: 20 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                            className="relative w-full max-w-md bg-[#0f0f0f] border border-white/10 rounded-[3rem] shadow-2xl overflow-hidden p-10 text-center"
+                            className="bg-[#111] border border-white/10 p-8 rounded-[2.5rem] w-full max-w-lg relative"
                         >
-                            {!isPurchased ? (
-                                <>
-                                    <button 
-                                        onClick={() => setSelectedExhibition(null)}
-                                        className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
-                                    >
-                                        <X size={24} />
-                                    </button>
-                                    
-                                    <div className="mb-8">
-                                        <div className="h-20 w-20 bg-primary/20 rounded-3xl flex items-center justify-center text-primary mx-auto mb-6">
-                                            <Ticket size={40} />
-                                        </div>
-                                        <h3 className="text-2xl font-bold mb-2">Wybierz typ biletu</h3>
-                                        <p className="text-muted-foreground">{selectedExhibition.title}</p>
-                                    </div>
+                            <button 
+                                onClick={() => setSelectedExhibition(null)}
+                                className="absolute top-6 right-6 text-white/40 hover:text-white transition-colors"
+                            >
+                                <X size={24} />
+                            </button>
 
-                                    <div className="space-y-4 mb-10">
-                                        <button
-                                            onClick={() => setTicketType("normal")}
-                                            className={cn(
-                                                "w-full p-6 rounded-3xl border transition-all flex items-center justify-between",
-                                                ticketType === "normal" 
-                                                    ? "bg-primary/10 border-primary text-white" 
-                                                    : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
-                                            )}
-                                        >
-                                            <div className="text-left">
-                                                <div className="font-bold">Normalny</div>
-                                                <div className="text-xs opacity-60">Pełny dostęp do wystawy</div>
-                                            </div>
-                                            <div className="text-xl font-black">49 PLN</div>
-                                        </button>
-                                        <button
-                                            onClick={() => setTicketType("reduced")}
-                                            className={cn(
-                                                "w-full p-6 rounded-3xl border transition-all flex items-center justify-between",
-                                                ticketType === "reduced" 
-                                                    ? "bg-primary/10 border-primary text-white" 
-                                                    : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
-                                            )}
-                                        >
-                                            <div className="text-left">
-                                                <div className="font-bold">Ulgowy</div>
-                                                <div className="text-xs opacity-60">Studenci, Seniorzy</div>
-                                            </div>
-                                            <div className="text-xl font-black">29 PLN</div>
-                                        </button>
-                                    </div>
+                            <h2 className="text-3xl font-bold mb-2">Kup Bilet</h2>
+                            <p className="text-muted-foreground mb-8">Na wystawę: <span className="text-white font-medium">{selectedExhibition.title}</span></p>
 
-                                    <button
-                                        onClick={handleBuyTicket}
-                                        className="w-full bg-primary text-white font-black py-5 rounded-[2rem] hover:shadow-[0_0_30px_rgba(var(--primary-rgb),0.5)] transition-all active:scale-[0.98]"
-                                    >
-                                        Potwierdzam Zakup
-                                    </button>
-                                </>
-                            ) : (
-                                <motion.div 
-                                    initial={{ opacity: 0, scale: 0.5 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    className="py-10"
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-white/60">Twój Email</label>
+                                    <input 
+                                        type="email" 
+                                        required 
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 focus:outline-none focus:border-primary/50 transition-colors"
+                                        placeholder="twoj@email.com"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-white/60">Typ Biletu</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {["Normalny", "Ulgowy"].map((type) => (
+                                            <button
+                                                key={type}
+                                                type="button"
+                                                onClick={() => setTicketType(type)}
+                                                className={`py-4 rounded-2xl font-bold border transition-all ${
+                                                    ticketType === type 
+                                                        ? "bg-primary border-primary text-white" 
+                                                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                                                }`}
+                                            >
+                                                {type}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2 text-white/60">Metoda Płatności</label>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {["BLIK", "Karta"].map((method) => (
+                                            <button
+                                                key={method}
+                                                type="button"
+                                                onClick={() => setPaymentMethod(method)}
+                                                className={`py-4 rounded-2xl font-bold border transition-all ${
+                                                    paymentMethod === method 
+                                                        ? "bg-primary border-primary text-white" 
+                                                        : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
+                                                }`}
+                                            >
+                                                {method}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed mt-4 flex items-center justify-center gap-2"
                                 >
-                                    <div className="h-24 w-24 bg-green-500/20 rounded-full flex items-center justify-center text-green-500 mx-auto mb-8 shadow-[0_0_40px_rgba(34,197,94,0.3)]">
-                                        <CheckCircle2 size={60} />
-                                    </div>
-                                    <h3 className="text-3xl font-black mb-4">Dziękujemy!</h3>
-                                    <p className="text-muted-foreground mb-8">Twój bilet został wygenerowany i wysłany na adres e-mail.</p>
-                                    <div className="bg-white/5 p-4 rounded-2xl border border-white/10 text-sm italic opacity-60">
-                                        Przekierowanie do listy wystaw...
-                                    </div>
+                                    {isSubmitting ? (
+                                        <>
+                                            <Loader2 className="animate-spin" size={20} />
+                                            Przetwarzanie...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Ticket size={20} />
+                                            Zapłać i Rezerwuj
+                                        </>
+                                    )}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+                {showSuccess && (
+                    <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            className="bg-[#111] border border-white/10 p-10 rounded-[2.5rem] w-full max-w-lg text-center relative"
+                        >
+                            <div className="mx-auto w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mb-8 border border-green-500/20">
+                                <motion.div
+                                    initial={{ scale: 0, rotate: -45 }}
+                                    animate={{ scale: 1, rotate: 0 }}
+                                    transition={{ 
+                                        type: "spring", 
+                                        stiffness: 300, 
+                                        damping: 15, 
+                                        delay: 0.2 
+                                    }}
+                                >
+                                    <Check className="text-green-500" size={48} />
                                 </motion.div>
-                            )}
+                            </div>
+
+                            <h2 className="text-3xl font-black mb-4 text-white">Dziękujemy za zamówienie!</h2>
+                            <p className="text-white/60 mb-10 leading-relaxed">
+                                Twój bilet został wstępnie zarezerwowany. Na adres email <span className="text-white font-bold">{purchasedEmail}</span> wysłaliśmy instrukcję płatności. Masz 15 minut na opłacenie.
+                            </p>
+
+                            <button
+                                onClick={() => setShowSuccess(false)}
+                                className="w-full bg-white text-black font-black py-5 rounded-2xl hover:bg-primary hover:text-white transition-all duration-300 shadow-[0_0_30px_rgba(255,255,255,0.1)]"
+                            >
+                                Rozumiem
+                            </button>
                         </motion.div>
                     </div>
                 )}

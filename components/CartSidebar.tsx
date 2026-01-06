@@ -3,12 +3,20 @@
 import React, { useState } from "react";
 import { useCart } from "@/context/CartContext";
 import { X, ShoppingCart, Trash2 } from "lucide-react";
+import CheckoutModal from "./CheckoutModal";
 
 export default function CartSidebar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const { cart, removeFromCart, checkout } = useCart();
 
   const total = cart.reduce((sum, item) => sum + (item.price || 0), 0);
+
+  const handleCheckoutSubmit = async (email: string) => {
+    setIsCheckoutModalOpen(false);
+    await checkout(email);
+    setIsOpen(false);
+  };
 
   return (
     <>
@@ -92,10 +100,7 @@ export default function CartSidebar() {
                 <span className="text-3xl font-bold tracking-tight">{total.toLocaleString()} PLN</span>
               </div>
               <button
-                onClick={async () => {
-                  await checkout();
-                  setIsOpen(false);
-                }}
+                onClick={() => setIsCheckoutModalOpen(true)}
                 className="w-full bg-primary text-primary-foreground py-4 rounded-xl font-bold text-lg hover:opacity-90 transition-all shadow-lg shadow-primary/20 active:scale-[0.98]"
               >
                 KUPUJĘ I PŁACĘ
@@ -104,6 +109,12 @@ export default function CartSidebar() {
           )}
         </div>
       </div>
+
+      <CheckoutModal 
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        onSubmit={handleCheckoutSubmit}
+      />
     </>
   );
 }

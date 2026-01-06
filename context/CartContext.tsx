@@ -9,7 +9,7 @@ interface CartContextType {
   addToCart: (art: Artwork) => void;
   removeFromCart: (artId: string) => void;
   clearCart: () => void;
-  checkout: () => Promise<void>;
+  checkout: (email: string) => Promise<void>;
   isCheckingOut: boolean;
   checkoutSuccess: boolean;
 }
@@ -37,16 +37,17 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart([]);
   };
 
-  const checkout = async () => {
+  const checkout = async (email: string) => {
     if (cart.length === 0) return;
 
-    const artIds = cart.map((item) => parseInt(item.id));
+    // Upewniamy się, że ID są liczbami całkowitymi (int)
+    const artIds = cart.map((item) => Number(item.id));
     setIsCheckingOut(true);
     
     try {
       // Używamy obiektu api dla spójności z resztą aplikacji
       await api.post("/api/v1/orders", {
-        customerId: 1,
+        email: email,
         artIds: artIds,
       });
 

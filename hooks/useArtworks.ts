@@ -46,9 +46,20 @@ export function useArtworks() {
         }
     };
 
+    const updateArtwork = async (id: string, artwork: any) => {
+        try {
+            const updated = await api.put<Artwork>(`/api/v1/arts/${id}`, artwork);
+            setArtworks(prev => prev.map(art => art.id === id ? updated : art));
+            return true;
+        } catch (err: any) {
+            setError(err.message || "Błąd podczas aktualizacji");
+            return false;
+        }
+    };
+
     useEffect(() => {
         fetchArtworks();
     }, [fetchArtworks]);
 
-    return { artworks, loading, error, refresh: fetchArtworks, deleteArtwork, addArtwork };
+    return { artworks, loading, error, refresh: fetchArtworks, deleteArtwork, addArtwork, updateArtwork };
 }

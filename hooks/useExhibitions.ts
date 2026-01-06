@@ -49,5 +49,46 @@ export function useExhibitions() {
         fetchExhibitions();
     }, [fetchExhibitions]);
 
-    return { exhibitions, loading, error };
+    const addExhibition = async (data: any) => {
+        try {
+            const newItem = await api.post<Exhibition>("/api/v1/exhibitions", data);
+            setExhibitions(prev => [...prev, newItem]);
+            return true;
+        } catch (err: any) {
+            setError(err.message || "Błąd podczas dodawania");
+            return false;
+        }
+    };
+
+    const updateExhibition = async (id: string, data: any) => {
+        try {
+            const updated = await api.put<Exhibition>(`/api/v1/exhibitions/${id}`, data);
+            setExhibitions(prev => prev.map(ex => ex.id === id ? updated : ex));
+            return true;
+        } catch (err: any) {
+            setError(err.message || "Błąd podczas aktualizacji");
+            return false;
+        }
+    };
+
+    const deleteExhibition = async (id: string) => {
+        try {
+            await api.delete(`/api/v1/exhibitions/${id}`);
+            setExhibitions(prev => prev.filter(ex => ex.id !== id));
+            return true;
+        } catch (err: any) {
+            setError(err.message || "Błąd podczas usuwania");
+            return false;
+        }
+    };
+
+    return { 
+        exhibitions, 
+        loading, 
+        error, 
+        refresh: fetchExhibitions, 
+        addExhibition, 
+        updateExhibition, 
+        deleteExhibition 
+    };
 }

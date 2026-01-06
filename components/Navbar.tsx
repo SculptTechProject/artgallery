@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Lock, User, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -10,11 +10,14 @@ export default function Navbar() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const router = useRouter();
+    const pathname = usePathname();
 
     useEffect(() => {
         const token = localStorage.getItem("admin_jwt");
         setIsLoggedIn(!!token);
     }, []);
+
+    if (pathname?.startsWith("/admin")) return null;
 
     const handleAdminClick = () => {
         if (isLoggedIn) {
