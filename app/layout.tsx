@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cookies } from "next/headers";
-import { NavbarMain } from "@/components/navbar/navbar-main";
+import { CartProvider } from "@/context/CartContext";
+import Navbar from "@/components/Navbar";
+import CartSidebar from "@/components/CartSidebar";
+import CheckoutOverlay from "@/components/CheckoutOverlay";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -36,8 +39,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             <script dangerouslySetInnerHTML={{ __html: NO_FLASH }} />
         </head>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <NavbarMain />
-        {children}
+        <CartProvider>
+            <Navbar />
+            <div className="pt-20">
+                {children}
+            </div>
+            <CartSidebar />
+            <CheckoutOverlay />
+        </CartProvider>
         </body>
         </html>
     );

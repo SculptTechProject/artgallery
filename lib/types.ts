@@ -11,6 +11,7 @@ export type Artwork = {
     description: string;
     imageUrl?: string;
     type: string;
+    price: number;
     artist: ArtistMini;
 };
 
@@ -19,4 +20,13 @@ export type Category = {
     name: string;
     slug: string;
     count: number;
+};
+
+export type Exhibition = {
+    id: string;
+    title: string;
+    description: string;
+    date: string;
+    imageUrl?: string;
+    location: string;
 };
