@@ -96,6 +96,19 @@ export default function ImageUpload({ value, onChange, className = "" }: ImageUp
                     {error}
                 </p>
             )}
+
+            {/* File name/URL display */}
+            <div className="mt-2">
+                {value ? (
+                    <p className="truncate text-xs text-gray-500 font-mono">
+                        {value}
+                    </p>
+                ) : (
+                    <p className="text-xs text-gray-500 font-mono">
+                        Brak pliku
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

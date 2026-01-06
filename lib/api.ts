@@ -38,3 +38,49 @@ export async function uploadFile(file: File): Promise<string> {
     const data = await res.json();
     return data.url; // Zakładamy, że backend zwraca { "url": "..." }
 }
+
+// Reports API
+export type DashboardStats = {
+    totalRevenue: number;
+    totalOrders: number;
+    ticketsSold: number;
+    artworksCount: number;
+};
+
+export type RevenueChartDataPoint = {
+    date: string;
+    revenue: number;
+};
+
+export type TopExhibition = {
+    id: string;
+    title: string;
+    revenue: number;
+};
+
+export async function getDashboardStats(): Promise<DashboardStats> {
+    return api.get<DashboardStats>("/api/v1/reports/dashboard-stats");
+}
+
+export async function getRevenueChartData(): Promise<RevenueChartDataPoint[]> {
+    return api.get<RevenueChartDataPoint[]>("/api/v1/reports/revenue-chart");
+}
+
+export async function getTopExhibitions(): Promise<TopExhibition[]> {
+    return api.get<TopExhibition[]>("/api/v1/reports/top-exhibitions");
+}
+
+// Orders API
+import type { Order, Ticket } from "./types";
+
+export async function getOrders(): Promise<Order[]> {
+    return api.get<Order[]>("/api/v1/orders");
+}
+
+export async function getAllOrdersAdmin(): Promise<Order[]> {
+    return api.get<Order[]>("/api/v1/orders/all");
+}
+
+export async function getAllTicketsAdmin(): Promise<Ticket[]> {
+    return api.get<Ticket[]>("/api/v1/tickets/all");
+}
