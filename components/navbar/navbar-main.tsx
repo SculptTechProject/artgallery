@@ -50,6 +50,7 @@ export const NavbarMain = () => {
                                     <li><NavigationMenuLink href="/">Wszystkie</NavigationMenuLink></li>
                                     <li><NavigationMenuLink href="/artworks/new">Najnowsze</NavigationMenuLink></li>
                                     <li><NavigationMenuLink href="/artworks/random">Losuj</NavigationMenuLink></li>
+                                    <li><NavigationMenuLink href="/tickets">Bilety</NavigationMenuLink></li>
                                 </ul>
                                 {/* TODO: Dynamic categories */}
                             </NavigationMenuContent>

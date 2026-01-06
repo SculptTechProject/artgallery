@@ -2,7 +2,6 @@ import { api } from "@/lib/api";
 import { Artwork } from "@/lib/types";
 import { artworkImageUrl } from "@/lib/images";
 import Image from "next/image";
-//import Image from "next/image";
 
 type SearchParams = { q?: string };
 
@@ -20,7 +19,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Sea
     let artworks: Artwork[] = [];
     try {
         artworks = await fetchArtworks(query);
-    } catch {}
+    } catch(e: any) {
+        console.error("Błąd pobierania:", e);
+    }
 
     const filtered = query
         ? artworks.filter(a => [a.title, a.artist?.name, a.artist?.surname]
