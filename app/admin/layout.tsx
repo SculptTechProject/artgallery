@@ -12,7 +12,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     useEffect(() => {
         const token = localStorage.getItem("admin_jwt");
         if (!token && pathname !== "/admin/login") {
-            router.push("/login");
+            router.push("/admin/login");
         } else {
             setIsAuthorized(true);
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -20,12 +20,12 @@ import {
   Image as ImageIcon,
   TrendingUp,
   Loader2,
+  Download,
 } from "lucide-react";
 import {
   getDashboardStats,
   getRevenueChartData,
   getTopExhibitions,
-  // Upewnij się, że te typy w api.ts też mają odpowiednie pola!
   type DashboardStats,
   type RevenueChartDataPoint,
   type TopExhibition,
@@ -40,35 +40,33 @@ const COLORS = [
   "#4ECDC4",
 ];
 
-// Definicja interfejsów LOKALNIE, żebyś miał pewność, że pasują do Backendu
-// (W idealnym świecie powinny być w types.ts/api.ts)
 interface DashboardStatsResponse {
   totalRevenue: number;
   totalOrders: number;
   ticketsSold: number;
-  totalArts: number; // Backend wysyła to, a nie artworksCount
+  totalArts: number;
 }
 
 interface TopExhibitionResponse {
-  exhibitionName: string; // Backend wysyła to, a nie title
+  exhibitionName: string;
   ticketCount: number;
   revenue: number;
 }
 
 export default function ReportsPage() {
-  // Używamy any lub poprawionych typów, żeby TypeScript nie krzyczał na mismatch
   const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
   const [revenueData, setRevenueData] = useState<RevenueChartDataPoint[]>([]);
   const [topExhibitions, setTopExhibitions] = useState<TopExhibitionResponse[]>(
     []
   );
   const [loading, setLoading] = useState(true);
+  const reportRef = useRef<HTMLDivElement | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
         setLoading(true);
-        // Rzutujemy na any przy pobieraniu, żeby ominąć błędy typowania starego api.ts
         const [statsData, revenueDataResult, exhibitionsData] =
           await Promise.all([
             getDashboardStats(),
@@ -86,6 +84,78 @@ export default function ReportsPage() {
     }
     fetchData();
   }, []);
+
+  async function downloadPdf() {
+    if (!reportRef.current) return;
+
+    try {
+      setPdfLoading(true);
+
+      const [{ toPng }, { jsPDF }] = await Promise.all([
+        import("html-to-image"),
+        import("jspdf"),
+      ]);
+
+      const element = reportRef.current;
+
+      const prevOverflow = element.style.overflow;
+      const prevHeight = element.style.height;
+      element.style.overflow = "visible";
+      element.style.height = "auto";
+
+      const imgData = await toPng(element, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "#111113",
+      });
+
+      element.style.overflow = prevOverflow;
+      element.style.height = prevHeight;
+
+      const img = new Image();
+      img.src = imgData;
+      await new Promise<void>((resolve) => {
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+      });
+
+      const imgWidthPx = img.naturalWidth || element.scrollWidth * 2;
+      const imgHeightPx = img.naturalHeight || element.scrollHeight * 2;
+
+      const pdf = new jsPDF({
+        orientation: "p",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      const imgWidth = pageWidth;
+      const imgHeight = (imgHeightPx * imgWidth) / imgWidthPx;
+
+      let y = 0;
+      let remainingHeight = imgHeight;
+
+      pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+      remainingHeight -= pageHeight;
+
+      while (remainingHeight > 0) {
+        pdf.addPage();
+        y -= pageHeight;
+        pdf.addImage(imgData, "PNG", 0, y, imgWidth, imgHeight);
+        remainingHeight -= pageHeight;
+      }
+
+      const today = new Date();
+      const fileName = `raporty_${today.toISOString().slice(0, 10)}.pdf`;
+      pdf.save(fileName);
+    } catch (e) {
+      console.error("PDF generation failed:", e);
+    } finally {
+      setPdfLoading(false);
+    }
+  }
 
   const statsCards = [
     {
@@ -110,14 +180,12 @@ export default function ReportsPage() {
     },
     {
       label: "Ilość Dzieł",
-      // FIX 1: Zmieniono stats?.artworksCount na stats?.totalArts
       value: stats?.totalArts ?? 0,
       icon: ImageIcon,
       color: "text-[#B161E9]",
     },
   ];
 
-  // FIX 2: Zmieniono exhibition.title na exhibition.exhibitionName
   const pieData =
     topExhibitions && topExhibitions.length > 0
       ? topExhibitions.map((exhibition) => ({
@@ -138,7 +206,29 @@ export default function ReportsPage() {
   }
 
   return (
-    <div className="p-6 space-y-6 h-full overflow-auto">
+    <div ref={reportRef} className="p-6 space-y-6 h-full overflow-auto">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-xl font-bold text-white">Raporty</h1>
+        <button
+          type="button"
+          onClick={downloadPdf}
+          disabled={pdfLoading}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#4E5155] bg-[#1E1F22] text-white hover:bg-[#2B2D30] disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {pdfLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Generowanie...
+            </>
+          ) : (
+            <>
+              <Download className="w-4 h-4" />
+              Pobierz PDF
+            </>
+          )}
+        </button>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {statsCards.map((card, idx) => (

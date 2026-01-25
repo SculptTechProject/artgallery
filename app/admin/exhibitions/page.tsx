@@ -88,7 +88,7 @@ export default function ExhibitionsAdminPage() {
     },
     {
       header: "NAZWA",
-      accessor: "name", // To musi być 'name', bo tak masz w JSON
+      accessor: "name",
     },
     {
       header: "DATA",

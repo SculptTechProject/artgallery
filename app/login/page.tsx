@@ -19,8 +19,6 @@ export default function LoginPage() {
         setError(null);
 
         try {
-            // Bezpośrednio na backend zgodnie z instrukcją, 
-            // lub przez nasz lib/api który uderza w API_BASE_URL (8080)
             const response = await fetch("http://localhost:8080/api/v1/admin/login", {
                 method: "POST",
                 headers: {
@@ -35,9 +33,6 @@ export default function LoginPage() {
 
             const data = await response.json();
             localStorage.setItem("admin_jwt", data.token);
-            
-            // Odświeżamy stan Navbar (można to zrobić lepiej przez Context/EventEmitter, 
-            // ale prosty redirect zazwyczaj wystarczy do odczytania na nowo)
             window.location.href = "/admin";
         } catch (err: any) {
             setError(err.message || "Wystąpił błąd podczas logowania");

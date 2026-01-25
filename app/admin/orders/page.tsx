@@ -81,20 +81,14 @@ export default function OrdersAdminPage() {
     ? orders.filter((order: any) => {
         const searchLower = searchQuery.toLowerCase();
 
-        // 1. Bezpiecznie wyciągamy email (tak jak zrobiliśmy w kolumnach)
         const email =
           order.customer?.email || order.user?.email || order.email || "";
 
-        // 2. Bezpiecznie wyciągamy datę (TO NAPRAWIA TWÓJ BŁĄD!)
-        // Jeśli backend wysyła orderDate, bierzemy to. Jeśli nie ma nic, bierzemy pusty tekst "".
         const dateStr = order.orderDate || order.date || "";
 
         return (
-          // Szukamy po ID
           order.id.toString().toLowerCase().includes(searchLower) ||
-          // Szukamy po emailu
           email.toLowerCase().includes(searchLower) ||
-          // Szukamy po dacie (bezpiecznie, bo dateStr to na pewno string)
           dateStr.toString().toLowerCase().includes(searchLower)
         );
       })
@@ -108,7 +102,6 @@ export default function OrdersAdminPage() {
     {
       header: "EMAIL KLIENTA",
       accessor: (order: any) => {
-        // POPRAWKA: Dodaliśmy order.customer?.email
         return order.customer?.email || order.user?.email || "Gość";
       },
       width: "200px",
@@ -116,7 +109,6 @@ export default function OrdersAdminPage() {
     {
       header: "DATA",
       accessor: (order: any) => {
-        // Tu jest fix: szukamy orderDate, a jak nie ma to date
         const dateStr = order.orderDate || order.date;
         if (!dateStr) return "Brak daty";
 
